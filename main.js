@@ -8,7 +8,7 @@ var ohm = require('ohm-js');
 var flGrammar = ohm.grammar(fs.readFileSync('flujo.ohm'));
 
 //Read in the source file and attempt to parse
-//The first two are node itself and the js script being run - 
+//The first two args are node itself and the js script being run - 
 //so should be ignored
 var args = process.argv.slice(2)
 var src  = args[0];
