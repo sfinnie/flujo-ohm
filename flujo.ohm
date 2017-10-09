@@ -1,4 +1,77 @@
-  GlujoGrammar {
-    greeting = "Hello" | "Hola"
-  }
+/* 
+ * Grammar for the Flujo experimental language, see http://flujo-lang.org
+ */
+
+FlujoGrammar {
+
+  /*******************************************************************
+   Processes: 
+   ******************************************************************/
+  Model
+    = (ProcessDefinition | Statement)*
+  
+  ProcessDefinition
+    = "Process" id "(" ProcFormalParams ")" ProcessBody
+  
+  ProcFormalParams
+    = ProcInputParams? ProcOutputParams?
+  
+  ProcInputParams
+    = "in" ListOf<FormalParam, ",">
+
+  ProcOutputParams
+    = "out" ListOf<FormalParam, ",">
+
+  FormalParam
+    = id ":" TypeName
+  
+  ProcessBody
+    = "{" Statement* "}"
+  
+  Statement  
+    = FlowSource ("|" FlowSink)*
+
+  FlowSource
+    = id | quotedLiteral | Selection
+
+  Selection
+    = "[" quantifier TypeName "]"
+
+  quantifier
+    = "all" | "one" 
+
+  //Type names start with an upper case 
+  TypeName
+    = upper id
+
+  FlowSink
+    = id
+
+  quotedLiteral = "\"" id "\""
+
+  /*************************************************
+   Comments and whitespace - just ignore
+   ************************************************/
+  space := whitespace | lineTerminator | comment
+
+  whitespace = "\t"
+              | "\x0B"    -- verticalTab
+              | "\x0C"    -- formFeed
+              | " "
+              | "\u00A0"  -- noBreakSpace
+              | "\uFEFF"  -- byteOrderMark
+              | unicodeSpaceSeparator
+  
+  unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+
+  lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+
+  comment = multiLineComment | singleLineComment
+  multiLineComment = "/*" (~"*/" sourceCharacter)* "*/"
+  singleLineComment = "//" (~lineTerminator sourceCharacter)*
+
+  sourceCharacter = any
+  id = letter+
+
+}
 

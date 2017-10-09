@@ -1,0 +1,121 @@
+grammar org.flujo.Flujo with org.eclipse.xtext.common.Terminals
+
+generate flujo "http://www.flujo.org/Flujo"
+
+Model:
+	DomainModel | 
+	ExternalSubsystem |
+	BridgeSpecification 
+;
+
+DomainModel:
+	"Domain" ":" name=ID
+		"URI" ":" uri=STRING
+		"version" ":" version=STRING //Version
+	contents+=DomainModelElement*
+;
+
+//Version:
+//	major=INT "." minor=INT "." revision=INT ("." qualifier=INT)? 
+//;
+
+
+DomainModelElement:
+	InternalSubsystem | SubsystemModelElement
+;
+
+InternalSubsystem:
+	"Subsystem" name=ID "{" 
+		contents+=SubsystemModelElement*
+	"}"
+;
+
+ExternalSubsystem:
+	"Subsystem" domain=[DomainModel] "." name=ID "{" 
+		contents+=SubsystemModelElement*
+	"}"
+;
+
+SubsystemModelElement:
+	Association | 
+	Type
+	
+;
+
+/**
+ * Associations (Binary Relationships)
+ */
+Association:
+	('Rel' | 'Relationship' | 'Association') name=REL_ID '{'	
+	(roles+=RelRole)*
+//	('constraints' '{' (constraints+=RelConstraint)* '}')?	
+	'}'
+;
+
+RelRole:
+	'Each' class1=[Class|QualifiedName] relPhrase=STRING multiplicity=Multiplicity class2=[Class|QualifiedName];
+
+terminal REL_ID :
+	('R'|'r')('0'..'9')+
+;
+
+QualifiedName:
+	ID ('.' ID)*
+;
+
+QualifiedNameWithWildcard:
+  QualifiedName '.*'?
+; 
+//
+////enum Multiplicity:
+////	optional = "0..1" | optional = "at most one" | 
+////	mandatoryOne="1" | mandatoryOne="exactly one" |
+////	many="0..*" | many="*" | many="zero or more" |
+////	mandatoryMany="1..*" | mandatoryMany="one or more"
+////;
+//
+Multiplicity:
+	NumericMultiplicity | TextualMultiplicity
+;
+
+NumericMultiplicity:
+	"0..1" | "1" | "0..*" | "*" | "1..*";
+
+TextualMultiplicity:
+	"at most one" | "exactly one" | "zero or more" | "one or more"
+;
+//
+/**
+ * Types (Classes + Datatypes)
+ */
+Type:
+	Datatype | Class //RelParticipant
+;
+
+//RelParticipant:
+//	Class
+//;
+
+Datatype:
+	"Datatype" name=ID "{" 
+		features +=Feature*
+	"}"
+;
+
+Class:
+	"Class" name=ID  ('plural' plural=ID)? "{" 
+		features+=Feature*
+	"}"
+;
+
+Feature:
+	Property
+;
+
+Property:
+	name=ID ":" type=[Datatype]
+;
+
+BridgeSpecification:
+	"Bridge" name=ID
+;

@@ -1,0 +1,150 @@
+module StructuralModels
+
+imports 
+
+  Common
+
+lexical syntax
+
+  Literal       = LiteralSymbol+
+  LiteralSymbol = Symbol
+  LiteralSymbol = "\\ " // space escape
+  LiteralSymbol = ~[\\\n\t\r\ \(\)]
+  
+lexical restrictions
+
+  Literal       -/- ~[\n\t\r\ \(\)]
+
+templates // Domains, Subsystems, Classes 
+
+  Start.Domain            = <
+    Domain <NAME>
+    
+      <Definition*; separator="\n\n">
+  >
+  Definition.Subsystem    = <
+    Subsystem <NAME> {
+      
+      <Definition*; separator="\n\n">
+    }>
+  
+  Definition.Class = <
+    Class <NAME> <Plural?> {
+      <Property*; separator="\n">
+    }
+  >
+  Plural.Plural           = <plural <NAME>>
+  
+  Property.Property       = <<NAME> : <DTRef> <Identifiers?>>
+  SSRef.SSRef             = <<NAME>>
+  DTRef.DTRef             = <<NAME>>
+  DTRef.DTRef             = <<SSRef>.<NAME>>
+  Identifiers.Identifiers = <{<Identifier*; separator=", ">}>
+  Identifier.Identifier   = <<ID>>
+
+templates // Binary Associations
+
+  Definition.Assoc = <
+    <RelKeyword> <ID> {
+      <RelRule*; separator="\n">
+      
+      <RelConstraints?>
+    }
+  >
+  
+  RelRule.RelRule = <Each <ClassRef> <RelPhrase> <Multiplicity> <ClassRef>>
+  ClassRef.ClassRef = <<NAME>>
+  ClassRef.ClassRef = <<SSRef>.<NAME>>
+  RelPhrase.RelPhrase = <<STRING>>
+  
+  Multiplicity.ZeroOrOne = <0..1>
+  Multiplicity.ExactlyOne = <1>
+  Multiplicity.ZeroOrMore = <0..*>
+  Multiplicity.OneOrMore = <1..*>
+  Multiplicity.ZeroOrOne = <at most one>
+  Multiplicity.ExactlyOne = <exactly one>
+  Multiplicity.ZeroOrMore = <zero or more>
+  Multiplicity.OneOrMore = <one or more>
+  
+  RelConstraints.RelConstraints = <
+    Constraints:
+      <RelConstraint*; separator="\n">
+    >
+  RelConstraint.RelConstraint = <<RelNavExpr> <RelConstraintOp> <RelNavExpr>>
+
+  RelNavExpr.RelNavExpr = <<RelPhraseRef><RelRefChild?>> // e.g. "is managed by".Professor ... 
+  RelNavExpr.RelNavExpr = <<ClassRef><ClassChild?>> // e.g. Professor."is managed by" ...
+  RelRefChild.RelNavExpr = <.<ClassRef><ClassChild?>>
+  ClassChild.RelNavExpr = <.<RelPhraseRef><RelRefChild?>>
+  RelPhraseRef.RelPhraseRef = <<STRING>>
+    
+  RelConstraintOp.Equals = <=>
+  RelConstraintOp.NotEquals = <!=>
+  
+  
+templates // Subtyping
+
+  Definition.GenSpec = <GenSpec <ID> partitions <Supertype> into <Subtype+; separator=", ">>
+  Supertype.Supertype = <<ClassRef>>
+  Subtype.Subtype = <<ClassRef>>
+  
+templates // Association Classes
+
+  Definition.AssocClass = <
+    Association Class <NAME> for <RelRef> {
+      <Property*; separator="\n">
+    }
+  >
+  
+  RelRef.RelRef = <<ID>>
+  RelRef.RelRef = <<SSRef>.<ID>>
+
+templates // Datatypes
+
+  Definition = <<DT>>
+  
+  DT.CompositeDT = <
+    <DTModifier?>Datatype <NAME> {
+      <Property*; separator="\n">
+      <Constructors?>
+    }
+  >
+  
+  Constructors.Constructors = <
+    Constructors {
+      <Constructor*; separator=",\n">
+    }
+  >
+  Constructor.Constructor = <<NAME> (<ConstructorElem*>)>
+  ConstructorElem.PropertyRef = <(<NAME>)>
+  ConstructorElem.Literal = <<Literal>>
+  
+  DT.NumDT = <
+    <DTModifier?>Datatype <NAME> constrains <NAME> {
+      <NumConstraint*; separator="\n">
+    }
+  >
+  
+  DT.StringDT = <
+    <DTModifier?>Datatype <NAME> constrains <NAME> {
+      pattern: <STRING>
+    }
+  >
+  
+  DT.Enum = <
+    Enumeration <NAME> {
+      <EnumVal*; separator=", ">
+    }
+  >
+   
+  NumConstraint.Min = <minimum: <IntOrStar>>
+  NumConstraint.Max = <maximum: <IntOrStar>>
+  NumConstraint.Precision = <precision: <IntOrStar>>
+  NumConstraint.Units = <units: <UNITS>>
+  
+  IntOrStar = <<INT>>
+  IntOrStar.Unbounded = <*>
+
+lexical syntax
+  
+  DTModifier = "External "

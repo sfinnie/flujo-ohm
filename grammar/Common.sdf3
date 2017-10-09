@@ -1,0 +1,72 @@
+module Common
+
+lexical syntax
+  
+  Symbol      = [a-zA-Z0-9\-]
+  Symbol      = Underscore
+  Underscore  = "_"
+  NAME        = Symbol+
+  RelKeyword  = "Rel" | "Assoc" | "Association"
+  EnumVal     = Symbol+
+  UNITS       = Symbol+ ("/" UNITS)? // TODO
+  UNITS       = "*"
+
+lexical restrictions // Greedy matching
+
+  NAME        -/- [a-zA-Z0-9\_\-]
+  EnumVal     -/- [a-zA-Z0-9\_\-]
+  UNITS       -/- [a-zA-Z0-9\_\-\/\*]
+  Underscore  -/- [\_] // double underscore is reserved for generated SDF constructors (see desugar-after/parsing.str)
+  
+/*
+ * Generated SDF below.
+ */
+
+lexical syntax
+
+	[a-zA-Z\_][a-zA-Z0-9\_]* -> ID
+	"-"? [0-9]+              -> INT
+	
+	"\"" StringChar* "\"" -> STRING
+	~[\"\n]               -> StringChar
+	"\\\""                -> StringChar
+	BackSlashChar         -> StringChar
+	"\\"                  -> BackSlashChar
+	
+  "'" SingleQuotedSTRINGChar* "'" -> SingleQuotedSTRING
+	 ~[\'\n]                        -> SingleQuotedSTRINGChar
+  "\\\""                          -> SingleQuotedSTRINGChar
+  BackSlashChar                   -> SingleQuotedSTRINGChar
+  
+	[\ \t\n\r] -> LAYOUT
+	
+	[\*]                             -> CommentChar
+	"/*" (~[\*] | CommentChar)* "*/" -> LAYOUT
+	"//" ~[\n\r]* ([\n\r] | EOF)     -> LAYOUT
+	
+	-> EOF
+
+lexical restrictions
+
+	// Ensure greedy matching for lexicals
+	
+	CommentChar   -/- [\/]
+	INT           -/- [0-9]
+	ID            -/- [a-zA-Z0-9\_]
+	
+	// EOF may not be followed by any char
+	
+	EOF           -/- ~[]
+	
+	// Backslash chars in strings may not be followed by " 
+	
+	BackSlashChar -/- [\"]
+
+context-free restrictions
+
+	// Ensure greedy matching for comments
+	
+	LAYOUT? -/- [\ \t\n\r]
+	LAYOUT? -/- [\/].[\/]
+	LAYOUT? -/- [\/].[\*]
+

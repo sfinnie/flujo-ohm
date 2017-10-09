@@ -1,0 +1,113 @@
+module Actions
+
+imports 
+
+  Common
+  StructuralModels
+
+lexical syntax
+
+  STRING                           -> DTValue
+  SingleQuotedSTRING               -> DTValue
+  UnquotedDTValue                  -> DTValue {avoid}
+  
+  DTValueChar UnquotedDTValueTail? -> UnquotedDTValue
+  DTValueCharOrSpace* DTValueChar  -> UnquotedDTValueTail
+  DTValueChar                      -> DTValueCharOrSpace
+  " "                              -> DTValueCharOrSpace
+  
+  "create" [\n\t\r\ ]* NAME        -> DTValue {reject}
+  
+  ~[\n\|\~\,\(\)\[\]\;\=\>\ ]      -> DTValueChar
+  "\\\""                           -> DTValueChar
+  BackSlashChar                    -> DTValueChar
+  
+  "~" ID                           -> VarID
+  "~self"                          -> SELF // used by code colorer
+
+lexical restrictions
+
+  UnquotedDTValue                  -/- ~[\n\|\~\,\(\)\[\]\;\=\>\ ]
+
+lexical syntax // reserved keywords
+
+  "~self"   -> VarID {reject}
+
+templates // Processes
+
+  Definition.Processes = <
+    Processes for Class <ClassRef> {
+      <Process*; separator="\n">
+    }
+  >
+
+  Definition = <<Process>>
+
+  Process.Process = <
+    Process <NAME>(<ProcessParamsBlock*; separator=", ">) {
+      <Flow?>
+    }
+  >
+
+  ProcessParamsBlock.ParamsIn = <in <ParamIn*; separator=", ">>
+  ProcessParamsBlock.ParamsIn = <out <ParamOut*; separator=", ">>
+  ParamIn.ParamIn             = <<VarID>:<Ref>>
+  ParamOut.ParamOut           = <<VarID>:<Ref>>
+
+templates // Flow structure
+
+  Flow.FlowElem = <<FlowElem1><FlowChild>>
+  
+  FlowChild.FlowElem = < | <FlowElem2><FlowChild>>
+  
+  FlowChild.Flow = <
+    ;
+    <Flow?>
+  >
+
+templates // FlowElem.Data
+
+  FlowElem.Data = <<Data>>
+  
+  Data.Val = <<DTValue>>
+  
+  Data.List = <[<Data*; separator=", ">]>
+  
+templates // FlowElem.ConstructionParams and FlowElem.Create
+  
+  FlowElem.ConstructionParams = <<ConstructionParams>>
+    
+  ConstructionParams.Tuple = <(<ConstructionParam*; separator=", ">)>
+  ConstructionParams.List = <[<ConstructionParams*; separator=", ">]>
+  ConstructionParam = <<ConstructionParamVal>>
+  ConstructionParam.ValAndParam = [[ConstructionParamVal] => [PropertyRef]]
+  ConstructionParamVal.Val = <<DTValue>>
+  ConstructionParamVal = <<VarRef>>
+
+  // TODO: rename PropertyRef to somthing more suitable
+  PropertyRef.PropertyRef = <<NAME>> // property of class
+  PropertyRef.PropertyRef = <<STRING>> // rel phrase
+
+  FlowElem.Create = <create <Ref><CreateParams?>>
+  Ref.Ref = <<NAME>>
+  Ref.Ref = <<SSRef>.<NAME>>
+  CreateParams.Params = <(<PropertyRef*; separator=", ">)>
+   
+templates // FlowElem.VarRef and FlowElem.VarDecl
+
+  FlowElem1 = <<FlowElem>>
+  FlowElem1 = <<VarRef>>
+  FlowElem2 = <<FlowElem>>
+  FlowElem2 = <<VarDecl>>
+  
+  VarRef.VarRef    = <<VarID>>
+  VarRef.VarRef    = <<SELF>>
+  VarDecl.VarDecl   = <<VarID>>
+  
+templates // FlowElem.PropertyRef
+
+  FlowElem.PropertyRef = <<VarRef>.<NAME>>
+  
+  FlowElem.Query = <<ClassRef>[<QueryModifier>, <NAME>=<DTValue>]>
+  QueryModifier.One = <one>
+  QueryModifier.All = <all>
