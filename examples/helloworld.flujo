@@ -1,3 +1,6 @@
+/******************************************* 
+    Flujo grammar samples - all should pass 
+ ******************************************/
 //Single line comment
 
 /* A
@@ -5,7 +8,11 @@
    comment
 */
 
-/* Process Declarations */
+/********************************************************
+  Process Definitions
+ *******************************************************/
+
+/* Process Definitions - Formal Parameter permutations */
 Process foo () {}
 Process foo (in foo: Bar) {}
 Process foo (in foo: Bar, bar: Baz, baz: Foo) {}
@@ -15,15 +22,43 @@ Process foo (in foo: Bar out bar:Baz) {}
 Process foo (in foo: Bar, bar: Baz, baz: Foo
             out foo: Bar, bar: Baz, baz: Foo) {}
 
+/* Process Definitions - Literals */
+
+Process quotedLiterals () {
+    "A simple string" | foo
+    "A string with escape characters: \' \" \\ \b \f \n \r \t \v" | foo
+    "A multi-line \
+        String" | foo
+}
+
+Process unquotedLiterals () {
+    123 | foo
+    .12 | foo
+    .12e12G | foo //TODO: Why does this not fail to parse??
+    .12e-1 | foo
+    .34E-123 | foo
+    123.456 | foo
+    123e456 | foo
+    123E456 | foo
+    123e-456 | foo
+    123E-456 | foo
+    0x01 | foo
+    0X01 | foo
+}
+
+
+/* Process Definitions - Flows */
 Process foo () { 
     foo | bar | baz
     flujo |  mojo | foobar // comment at end of line
     "foo" | bar | /* comment in line */ baz
 }
 
-
-[all Foo] | bar
-[one Bar] | baz | foo
+Process bar (out foo: BarBar) {
+    [all Foo] | bar
+    [one Bar] | baz | foo
+    (1, 2, "foo") | foo
+}
 
 
 

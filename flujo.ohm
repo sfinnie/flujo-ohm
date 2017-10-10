@@ -5,10 +5,14 @@
 FlujoGrammar {
 
   /*******************************************************************
-   Processes: 
+   Processes.  The means by which data is read, written and
+   transformed & the mechanism for generating events.
    ******************************************************************/
   Model
-    = (ProcessDefinition | Statement)*
+    = ModelElement*
+
+  ModelElement
+    = ProcessDefinition
   
   ProcessDefinition
     = "Process" id "(" ProcFormalParams ")" ProcessBody
@@ -32,7 +36,13 @@ FlujoGrammar {
     = FlowSource ("|" FlowSink)*
 
   FlowSource
-    = id | quotedLiteral | Selection
+    = id | literal | Tuple | Selection
+  
+  Tuple
+    = "(" ListOf<Expression, ","> ")"
+  
+  Expression
+    = id | literal
 
   Selection
     = "[" quantifier TypeName "]"
@@ -47,10 +57,90 @@ FlujoGrammar {
   FlowSink
     = id
 
-  quotedLiteral = "\"" id "\""
+/***************************************************
+  Literals.  Note there's no implicit denotation 
+  here, and deliberately so.  So quotedLiteral 
+  instead of stringLiteral, and unquotedLiteral 
+  instead of numeric.  That's a core belief in the 
+  language: that these are /representations/ and
+  can be interpreted as such for any type: not just
+  conventional "built in" types.
+
+  Otherwise, these follow pretty standard rules
+  for quoted and unquoted literals.
+
+  These are taken more or less directly from the
+  es5.ohm sample grammar in the ohm git repo.
+ **************************************************/
+
+  literal
+    = unquotedLiteral | quotedLiteral
+
+  unquotedLiteral 
+    =  decimalLiteral | hexIntegerLiteral | digitLiteral
+  
+  decimalLiteral = decimalIntegerLiteral "." decimalDigit* exponentPart -- bothParts
+                 |                       "." decimalDigit+ exponentPart -- decimalsOnly
+                 | decimalIntegerLiteral                   exponentPart -- integerOnly
+
+  decimalIntegerLiteral = nonZeroDigit decimalDigit*  -- nonZero
+                        | "0"                         -- zero
+  decimalDigit = "0".."9"
+  nonZeroDigit = "1".."9"
+
+  exponentPart = exponentIndicator signedInteger -- present
+               |                                 -- absent
+  exponentIndicator = "e" | "E"
+  signedInteger = "+" decimalDigit* -- positive
+                | "-" decimalDigit* -- negative
+                |     decimalDigit+ -- noSign
+
+  hexIntegerLiteral = "0x" hexDigit+
+                    | "0X" hexDigit+
+
+  // hexDigit defined in Ohm's built-in rules (otherwise: hexDigit = "0".."9" | "a".."f" | "A".."F")
+
+  digitLiteral
+    = digit+
+
+
+  quotedLiteral 
+    = "\"" quotedLiteralCharacter* "\""
+  
+  quotedLiteralCharacter 
+    = ~("\"" | "\\" | lineTerminator) sourceCharacter -- nonEscaped
+    | "\\" escapeSequence                             -- escaped
+    | lineContinuation                                -- lineContinuation
+
+  lineContinuation 
+    = "\\" lineTerminatorSequence
+
+  escapeSequence = unicodeEscapeSequence
+                 | hexEscapeSequence
+                 | characterEscapeSequence  // Must come last.
+
+  unicodeEscapeSequence 
+    = "u" hexDigit hexDigit hexDigit hexDigit
+
+  hexEscapeSequence 
+    = "x" hexDigit hexDigit
+
+  characterEscapeSequence 
+    = singleEscapeCharacter
+    | nonEscapeCharacter
+  
+  singleEscapeCharacter 
+    = "'" | "\"" | "\\" | "b" | "f" | "n" | "r" | "t" | "v"
+  
+  nonEscapeCharacter 
+    = ~(escapeCharacter | lineTerminator) sourceCharacter
+
+  escapeCharacter 
+    = singleEscapeCharacter | decimalDigit | "x" | "u"
 
   /*************************************************
-   Comments and whitespace - just ignore
+   Comments and whitespace - all ignored during 
+   parsing
    ************************************************/
   space := whitespace | lineTerminator | comment
 
@@ -65,6 +155,8 @@ FlujoGrammar {
   unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
 
   lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+  lineTerminatorSequence = "\n" | "\r" ~"\n" | "\u2028" | "\u2029" | "\r\n"
+
 
   comment = multiLineComment | singleLineComment
   multiLineComment = "/*" (~"*/" sourceCharacter)* "*/"
