@@ -33,8 +33,9 @@ Process quotedLiterals () {
 
 Process unquotedLiterals () {
     123 | foo
+    34f5 | foo
     .12 | foo
-    .12e12G | foo //TODO: Why does this not fail to parse??
+    .12e12G | foo //TODO: Why does this not fail?? Being parsed as identifier?
     .12e-1 | foo
     .34E-123 | foo
     123.456 | foo

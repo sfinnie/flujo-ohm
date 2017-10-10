@@ -103,7 +103,6 @@ FlujoGrammar {
   digitLiteral
     = digit+
 
-
   quotedLiteral 
     = "\"" quotedLiteralCharacter* "\""
   
