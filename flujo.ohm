@@ -36,7 +36,7 @@ FlujoGrammar {
     = FlowSource ("|" FlowSink)*
 
   FlowSource
-    = id | literal | Tuple | Selection
+    = Expression | Tuple | Selection
   
   Tuple
     = "(" ListOf<Expression, ","> ")"
@@ -70,7 +70,8 @@ FlujoGrammar {
   for quoted and unquoted literals.
 
   These are taken more or less directly from the
-  es5.ohm sample grammar in the ohm git repo.
+  es5.ohm sample grammar in the ohm git repo 
+  (https://github.com/harc/ohm/blob/master/examples/ecmascript/es5.js)
  **************************************************/
 
   literal
@@ -139,7 +140,7 @@ FlujoGrammar {
 
   /*************************************************
    Comments and whitespace - all ignored during 
-   parsing
+   parsing. Again taken from es5 example.
    ************************************************/
   space := whitespace | lineTerminator | comment
 
