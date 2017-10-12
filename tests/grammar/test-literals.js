@@ -18,10 +18,10 @@ console.log("Testing Literals")
 console.log("***************************************************")
 
 //Read in the grammar & create the parser etc.
-var flGrammar = ohm.grammar(fs.readFileSync('../flujo.ohm'));
+var flGrammar = ohm.grammar(fs.readFileSync('../../flujo.ohm'));
 
 //The test cases: all invalid as literals
-var expectedInvalidLiterals = ["0.12e12G", "0xZFG", ".12e12G", "Q1w"]
+var expectedInvalidLiterals = [".12e12G", "0xZFG", ".12e12G", "Q1w"]
 
 //arrays to hold the results of testing
 var actualInvalidLiterals = []
